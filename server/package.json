@@ -1,0 +1,16 @@
+{
+  "name": "crossstreet-box-server",
+  "version": "1.0.0",
+  "description": "API della web-app di prenotazione lezioni di CrossStreet Box",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "author": "Paolo Vicaro",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}
