@@ -1,5 +1,6 @@
 const express = require('express')
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 const db = require('../db')
 const { validText, validEmail, validPassword } = require('../validation')
 
@@ -54,6 +55,59 @@ router.post('/register', async (req, res) => {
 
   // Nella risposta non mando mai l'hash della password
   res.status(201).json({ id: result.insertId, name: name, email: email, role: 'user' })
+})
+
+// Login: se email e password sono giuste restituisce un token JWT,
+// che il front end dovrà mandare a ogni richiesta protetta
+router.post('/login', async (req, res) => {
+  const body = req.body
+
+  if (!body) {
+    return res.status(400).json({ error: 'Manca il corpo della richiesta' })
+  }
+
+  const email = validEmail(body.email)
+  const password = body.password
+
+  if (email === null || typeof password !== 'string') {
+    return res.status(400).json({ error: 'Email e password sono obbligatorie' })
+  }
+
+  const [users] = await db.execute(
+    'SELECT id, name, email, password_hash, role FROM users WHERE email = ?',
+    [email]
+  )
+
+  // Se l'email non esiste o la password è sbagliata rispondo con lo stesso
+  // messaggio: così chi prova a indovinare non scopre quali email sono
+  // registrate
+  if (users.length === 0) {
+    return res.status(401).json({ error: 'Email o password non corrette' })
+  }
+
+  const user = users[0]
+
+  // bcrypt ricalcola l'hash della password inserita e lo confronta con
+  // quello salvato nel database
+  const passwordMatches = await bcrypt.compare(password, user.password_hash)
+
+  if (!passwordMatches) {
+    return res.status(401).json({ error: 'Email o password non corrette' })
+  }
+
+  // Nel token metto solo id e ruolo: è firmato ma non cifrato, chiunque
+  // può leggerne il contenuto, quindi niente dati riservati.
+  // Dopo 24 ore scade e bisogna rifare il login.
+  const token = jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h' }
+  )
+
+  res.json({
+    token: token,
+    user: { id: user.id, name: user.name, email: user.email, role: user.role }
+  })
 })
 
 module.exports = router
