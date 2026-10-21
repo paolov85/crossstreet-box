@@ -47,4 +47,7 @@ function validPassword (value) {
   return value
 }
 
-module.exports = { validText, validEmail, validPassword }
+// Categorie di lezione ammesse: le stesse dell'ENUM nella tabella classes
+const categories = ['CrossFit', 'Hyrox', 'Open Box']
+
+module.exports = { validText, validEmail, validPassword, categories }
