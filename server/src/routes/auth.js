@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const db = require('../db')
 const { validText, validEmail, validPassword } = require('../validation')
+const { requireAuth } = require('../middleware/auth')
 
 const router = express.Router()
 
@@ -108,6 +109,22 @@ router.post('/login', async (req, res) => {
     token: token,
     user: { id: user.id, name: user.name, email: user.email, role: user.role }
   })
+})
+
+// Dati dell'utente collegato. Serve al front end per sapere chi è
+// l'utente quando ricarica la pagina e ha già un token salvato.
+router.get('/me', requireAuth, async (req, res) => {
+  const [users] = await db.execute(
+    'SELECT id, name, email, role FROM users WHERE id = ?',
+    [req.user.id]
+  )
+
+  // Il token è valido ma l'utente nel frattempo è stato eliminato
+  if (users.length === 0) {
+    return res.status(404).json({ error: 'Utente non trovato' })
+  }
+
+  res.json(users[0])
 })
 
 module.exports = router
