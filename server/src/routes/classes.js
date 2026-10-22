@@ -1,6 +1,6 @@
 const express = require('express')
 const db = require('../db')
-const { validText, validInteger, validDate, categories } = require('../validation')
+const { validText, validInteger, validId, validDate, categories } = require('../validation')
 const { requireAuth, requireAdmin } = require('../middleware/auth')
 
 const router = express.Router()
@@ -120,6 +120,86 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
   values.available_spots = values.capacity
 
   res.status(201).json(values)
+})
+
+// Modifica di una lezione esistente, solo per l'admin
+router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = validId(req.params.id)
+
+  if (id === null) {
+    return res.status(400).json({ error: 'Id della lezione non valido' })
+  }
+
+  if (!req.body) {
+    return res.status(400).json({ error: 'Manca il corpo della richiesta' })
+  }
+
+  const check = checkClass(req.body)
+
+  if (check.error) {
+    return res.status(400).json({ error: check.error })
+  }
+
+  const values = check.values
+
+  // Leggo la lezione insieme al numero di prenotazioni che ha già
+  const [classes] = await db.execute(
+    `SELECT c.id, COUNT(b.id) AS booked
+     FROM classes c
+     LEFT JOIN bookings b ON b.class_id = c.id
+     WHERE c.id = ?
+     GROUP BY c.id`,
+    [id]
+  )
+
+  if (classes.length === 0) {
+    return res.status(404).json({ error: 'Lezione non trovata' })
+  }
+
+  const booked = classes[0].booked
+
+  // Non si possono togliere posti già prenotati: se 8 persone sono iscritte,
+  // la capienza non può scendere a 6
+  if (values.capacity < booked) {
+    return res.status(409).json({ error: 'Ci sono già ' + booked + ' prenotati: i posti non possono essere meno di così' })
+  }
+
+  await db.execute(
+    `UPDATE classes
+     SET title = ?, category = ?, coach = ?, starts_at = ?, duration_minutes = ?, capacity = ?
+     WHERE id = ?`,
+    [values.title, values.category, values.coach, values.starts_at, values.duration_minutes, values.capacity, id]
+  )
+
+  values.id = id
+  values.available_spots = values.capacity - booked
+
+  res.json(values)
+})
+
+// Eliminazione di una lezione, solo per l'admin.
+// Le sue prenotazioni vengono cancellate in automatico dal database,
+// grazie a ON DELETE CASCADE nella tabella bookings.
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
+  const id = validId(req.params.id)
+
+  if (id === null) {
+    return res.status(400).json({ error: 'Id della lezione non valido' })
+  }
+
+  const [result] = await db.execute(
+    'DELETE FROM classes WHERE id = ?',
+    [id]
+  )
+
+  // affectedRows dice quante righe sono state eliminate: zero vuol dire
+  // che la lezione non esisteva
+  if (result.affectedRows === 0) {
+    return res.status(404).json({ error: 'Lezione non trovata' })
+  }
+
+  // 204: operazione riuscita, nessun contenuto da restituire
+  res.status(204).end()
 })
 
 module.exports = router

@@ -64,6 +64,12 @@ function validInteger (value, max) {
   return number
 }
 
+// L'id che arriva nell'indirizzo, ad esempio /api/classes/5: deve essere
+// un intero positivo. Il limite è il valore massimo di una colonna INT.
+function validId (value) {
+  return validInteger(value, 2147483647)
+}
+
 // Data e ora in un formato che JavaScript sa leggere, ad esempio
 // "2026-10-25T07:00" come arriva da un campo <input type="datetime-local">.
 // Restituisce un oggetto Date, oppure null se non va bene.
@@ -85,4 +91,4 @@ function validDate (value) {
 // Categorie di lezione ammesse: le stesse dell'ENUM nella tabella classes
 const categories = ['CrossFit', 'Hyrox', 'Open Box']
 
-module.exports = { validText, validEmail, validPassword, validInteger, validDate, categories }
+module.exports = { validText, validEmail, validPassword, validInteger, validId, validDate, categories }
