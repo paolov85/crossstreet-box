@@ -27,4 +27,15 @@ function requireAuth (req, res, next) {
   }
 }
 
-module.exports = { requireAuth }
+// Middleware per le rotte riservate all'admin. Va messo dopo requireAuth,
+// che ha già controllato il token e salvato il ruolo in req.user.
+function requireAdmin (req, res, next) {
+  // 403 e non 401: l'utente è riconosciuto, ma non ha il permesso
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Operazione riservata agli amministratori' })
+  }
+
+  next()
+}
+
+module.exports = { requireAuth, requireAdmin }

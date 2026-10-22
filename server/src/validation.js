@@ -47,7 +47,42 @@ function validPassword (value) {
   return value
 }
 
+// Numero intero compreso tra 1 e max. Accetta anche una stringa numerica,
+// come quelle che arrivano dai campi dei form.
+// Restituisce il numero, oppure null se non va bene.
+function validInteger (value, max) {
+  if (typeof value !== 'number' && typeof value !== 'string') {
+    return null
+  }
+
+  const number = Number(value)
+
+  if (!Number.isInteger(number) || number < 1 || number > max) {
+    return null
+  }
+
+  return number
+}
+
+// Data e ora in un formato che JavaScript sa leggere, ad esempio
+// "2026-10-25T07:00" come arriva da un campo <input type="datetime-local">.
+// Restituisce un oggetto Date, oppure null se non va bene.
+function validDate (value) {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const date = new Date(value)
+
+  // Se il testo non è una data, getTime() restituisce NaN
+  if (isNaN(date.getTime())) {
+    return null
+  }
+
+  return date
+}
+
 // Categorie di lezione ammesse: le stesse dell'ENUM nella tabella classes
 const categories = ['CrossFit', 'Hyrox', 'Open Box']
 
-module.exports = { validText, validEmail, validPassword, categories }
+module.exports = { validText, validEmail, validPassword, validInteger, validDate, categories }

@@ -1,6 +1,7 @@
 const express = require('express')
 const db = require('../db')
-const { categories } = require('../validation')
+const { validText, validInteger, validDate, categories } = require('../validation')
+const { requireAuth, requireAdmin } = require('../middleware/auth')
 
 const router = express.Router()
 
@@ -38,6 +39,87 @@ router.get('/', async (req, res) => {
 
   const [classes] = await db.execute(sql, params)
   res.json(classes)
+})
+
+// Controlla i campi di una lezione inviati dall'admin.
+// Restituisce un oggetto con error (il messaggio da mostrare) se qualcosa
+// non va, altrimenti con values (i valori puliti da salvare).
+// La uso sia per la creazione sia, più avanti, per la modifica.
+function checkClass (body) {
+  const title = validText(body.title, 100)
+  const coach = validText(body.coach, 100)
+  const startsAt = validDate(body.starts_at)
+  const duration = validInteger(body.duration_minutes, 240)
+  const capacity = validInteger(body.capacity, 100)
+
+  if (title === null) {
+    return { error: 'Il titolo deve essere un testo da 1 a 100 caratteri' }
+  }
+
+  if (!categories.includes(body.category)) {
+    return { error: 'La categoria deve essere una tra: ' + categories.join(', ') }
+  }
+
+  if (coach === null) {
+    return { error: 'Il nome del coach deve essere un testo da 1 a 100 caratteri' }
+  }
+
+  if (startsAt === null) {
+    return { error: 'La data della lezione non è valida' }
+  }
+
+  // Non ha senso mettere in calendario una lezione già passata
+  if (startsAt < new Date()) {
+    return { error: 'La data della lezione deve essere nel futuro' }
+  }
+
+  if (duration === null) {
+    return { error: 'La durata deve essere un numero intero di minuti, da 1 a 240' }
+  }
+
+  if (capacity === null) {
+    return { error: 'I posti devono essere un numero intero da 1 a 100' }
+  }
+
+  return {
+    values: {
+      title: title,
+      category: body.category,
+      coach: coach,
+      starts_at: startsAt,
+      duration_minutes: duration,
+      capacity: capacity
+    }
+  }
+}
+
+// Creazione di una nuova lezione, solo per l'admin.
+// I due middleware si eseguono in ordine: prima il controllo del token,
+// poi quello del ruolo.
+router.post('/', requireAuth, requireAdmin, async (req, res) => {
+  if (!req.body) {
+    return res.status(400).json({ error: 'Manca il corpo della richiesta' })
+  }
+
+  const check = checkClass(req.body)
+
+  if (check.error) {
+    return res.status(400).json({ error: check.error })
+  }
+
+  const values = check.values
+
+  const [result] = await db.execute(
+    `INSERT INTO classes (title, category, coach, starts_at, duration_minutes, capacity)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [values.title, values.category, values.coach, values.starts_at, values.duration_minutes, values.capacity]
+  )
+
+  // Rispondo con la lezione appena creata, che ha ancora tutti i posti liberi
+  values.id = result.insertId
+  values.available_spots = values.capacity
+
+  res.status(201).json(values)
 })
 
 module.exports = router
