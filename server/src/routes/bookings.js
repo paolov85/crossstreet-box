@@ -89,4 +89,53 @@ router.post('/', requireAuth, async (req, res) => {
   }
 })
 
+// Prossime lezioni prenotate dall'utente collegato.
+// La JOIN prende da classes i dati della lezione di ogni prenotazione:
+// qui va bene una JOIN normale, perché ogni prenotazione ha sempre la sua
+// lezione.
+router.get('/me', requireAuth, async (req, res) => {
+  const [bookings] = await db.execute(
+    `SELECT b.id, b.class_id, c.title, c.category, c.coach, c.starts_at, c.duration_minutes
+     FROM bookings b
+     JOIN classes c ON c.id = b.class_id
+     WHERE b.user_id = ? AND c.starts_at >= NOW()
+     ORDER BY c.starts_at`,
+    [req.user.id]
+  )
+
+  res.json(bookings)
+})
+
+// Disdetta di una prenotazione dell'utente collegato
+router.delete('/:id', requireAuth, async (req, res) => {
+  const id = validId(req.params.id)
+
+  if (id === null) {
+    return res.status(400).json({ error: 'Id della prenotazione non valido' })
+  }
+
+  // Cerco la prenotazione solo tra quelle dell'utente: se appartiene a
+  // qualcun altro rispondo come se non esistesse, così non si può
+  // disdire la prenotazione di un altro
+  const [bookings] = await db.execute(
+    `SELECT b.id, c.starts_at
+     FROM bookings b
+     JOIN classes c ON c.id = b.class_id
+     WHERE b.id = ? AND b.user_id = ?`,
+    [id, req.user.id]
+  )
+
+  if (bookings.length === 0) {
+    return res.status(404).json({ error: 'Prenotazione non trovata' })
+  }
+
+  if (bookings[0].starts_at < new Date()) {
+    return res.status(400).json({ error: 'La lezione è già iniziata, non si può più disdire' })
+  }
+
+  await db.execute('DELETE FROM bookings WHERE id = ?', [id])
+
+  res.status(204).end()
+})
+
 module.exports = router
