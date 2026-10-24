@@ -1,9 +1,15 @@
 const express = require('express')
+const cors = require('cors')
 const authRoutes = require('./routes/auth')
 const classesRoutes = require('./routes/classes')
 const bookingsRoutes = require('./routes/bookings')
 
 const app = express()
+
+// Il front end online sta su un dominio diverso da quello dell'API, e il
+// browser blocca le richieste tra domini diversi se il server non le
+// autorizza. Qui autorizzo solo l'indirizzo del front end.
+app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }))
 
 // Permette di leggere il corpo JSON delle richieste
 app.use(express.json())

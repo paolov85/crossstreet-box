@@ -98,9 +98,9 @@ router.get('/me', requireAuth, async (req, res) => {
     `SELECT b.id, b.class_id, c.title, c.category, c.coach, c.starts_at, c.duration_minutes
      FROM bookings b
      JOIN classes c ON c.id = b.class_id
-     WHERE b.user_id = ? AND c.starts_at >= NOW()
+     WHERE b.user_id = ? AND c.starts_at >= ?
      ORDER BY c.starts_at`,
-    [req.user.id]
+    [req.user.id, new Date()]
   )
 
   res.json(bookings)

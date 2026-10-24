@@ -1,7 +1,9 @@
 const app = require('./app')
 const db = require('./db')
 
-const port = 3000
+// In produzione la porta la decide il servizio di hosting con la variabile
+// PORT; in locale si usa la 3000
+const port = process.env.PORT || 3000
 
 // Controllo all'avvio che il database risponda
 db.query('SELECT 1')

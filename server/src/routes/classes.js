@@ -25,8 +25,12 @@ router.get('/', async (req, res) => {
            c.capacity, c.capacity - COUNT(b.id) AS available_spots
     FROM classes c
     LEFT JOIN bookings b ON b.class_id = c.id
-    WHERE c.starts_at >= NOW()`
-  const params = []
+    WHERE c.starts_at >= ?`
+
+  // L'ora attuale la passo da Node invece di usare NOW() di MySQL: così
+  // l'unico orologio è quello del server Node, e non ci sono differenze
+  // di fuso orario tra il server e il database online
+  const params = [new Date()]
 
   if (category !== undefined) {
     sql = sql + ' AND c.category = ?'
