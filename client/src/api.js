@@ -1,8 +1,12 @@
+import { session } from './auth'
+
 // Tutte le chiamate all'API passano da qui, così l'indirizzo del server
 // e la gestione degli errori stanno in un punto solo.
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 // Manda una richiesta all'API e restituisce i dati della risposta.
+// Se l'utente è collegato aggiunge il token, che le rotte protette
+// del server richiedono.
 // Se il server risponde con un errore, lancia un Error con il messaggio
 // che ha scritto il server (es. "Esiste già un account con questa email").
 export async function apiRequest(path, options = {}) {
@@ -10,6 +14,10 @@ export async function apiRequest(path, options = {}) {
 
   if (options.body !== undefined) {
     headers['Content-Type'] = 'application/json'
+  }
+
+  if (session.token) {
+    headers['Authorization'] = 'Bearer ' + session.token
   }
 
   let response

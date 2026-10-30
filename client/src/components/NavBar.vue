@@ -1,6 +1,13 @@
 <script setup>
-// Per ora i link sono sempre gli stessi. Quando ci sarà il login la barra
-// mostrerà link diversi a seconda che l'utente sia collegato o no.
+import { useRouter } from 'vue-router'
+import { session, clearSession } from '../auth'
+
+const router = useRouter()
+
+function logout() {
+  clearSession()
+  router.push('/')
+}
 </script>
 
 <template>
@@ -10,8 +17,16 @@
 
       <ul class="nav-links">
         <li><RouterLink to="/lezioni">Lezioni</RouterLink></li>
-        <li><RouterLink to="/accedi">Accedi</RouterLink></li>
-        <li><RouterLink to="/registrati" class="button">Registrati</RouterLink></li>
+
+        <!-- I link cambiano a seconda che l'utente sia collegato o no -->
+        <template v-if="session.user">
+          <li class="user-name">Ciao, {{ session.user.name }}</li>
+          <li><button type="button" class="logout" @click="logout">Esci</button></li>
+        </template>
+        <template v-else>
+          <li><RouterLink to="/accedi">Accedi</RouterLink></li>
+          <li><RouterLink to="/registrati" class="button">Registrati</RouterLink></li>
+        </template>
       </ul>
     </nav>
   </header>
@@ -63,5 +78,16 @@
 
 .nav-links .button {
   color: var(--color-dark);
+}
+.user-name {
+  color: #bbbbbb;
+}
+
+.logout {
+  background: none;
+  color: var(--color-light);
+  border: 1px solid var(--color-light);
+  border-radius: 4px;
+  padding: 0.4rem 0.9rem;
 }
 </style>
