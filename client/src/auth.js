@@ -39,3 +39,9 @@ export function clearSession() {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USER_KEY)
 }
+
+// Aggiorna i dati dell'utente lasciando lo stesso token
+export function updateUser(user) {
+  session.user = user
+  localStorage.setItem(USER_KEY, JSON.stringify(user))
+}

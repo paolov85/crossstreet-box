@@ -4,9 +4,12 @@ import { session, clearSession } from '../auth'
 
 const router = useRouter()
 
-function logout() {
+// Prima esco dalla pagina, poi chiudo la sessione: se lo facessi al
+// contrario e si fosse su una pagina riservata, App.vue rimanderebbe
+// alla pagina di accesso invece che alla home
+async function logout() {
+  await router.push('/')
   clearSession()
-  router.push('/')
 }
 </script>
 
@@ -20,6 +23,8 @@ function logout() {
 
         <!-- I link cambiano a seconda che l'utente sia collegato o no -->
         <template v-if="session.user">
+          <li><RouterLink to="/prenotazioni">Le mie prenotazioni</RouterLink></li>
+          <li v-if="session.user.role === 'admin'"><RouterLink to="/admin">Admin</RouterLink></li>
           <li class="user-name">Ciao, {{ session.user.name }}</li>
           <li><button type="button" class="logout" @click="logout">Esci</button></li>
         </template>

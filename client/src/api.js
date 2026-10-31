@@ -1,4 +1,4 @@
-import { session } from './auth'
+import { session, clearSession } from './auth'
 
 // Tutte le chiamate all'API passano da qui, così l'indirizzo del server
 // e la gestione degli errori stanno in un punto solo.
@@ -39,10 +39,22 @@ export async function apiRequest(path, options = {}) {
     return null
   }
 
+  // 401 con un token salvato vuol dire che il token è scaduto (dopo 24 ore)
+  // o non è più valido: lo dimentico, così l'app torna allo stato di
+  // utente non collegato. Il 401 del login con password sbagliata non
+  // passa da qui, perché in quel momento non c'è nessun token.
+  if (response.status === 401 && session.token) {
+    clearSession()
+    throw new Error('La sessione è scaduta, accedi di nuovo')
+  }
+
   const data = await response.json()
 
   if (!response.ok) {
-    throw new Error(data.error || 'Si è verificato un errore')
+    // Allego anche il codice HTTP, per chi deve distinguere i casi
+    const error = new Error(data.error || 'Si è verificato un errore')
+    error.status = response.status
+    throw error
   }
 
   return data

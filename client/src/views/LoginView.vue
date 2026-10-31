@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { apiRequest } from '../api'
 import { saveSession } from '../auth'
 
 const router = useRouter()
+const route = useRoute()
 
 const email = ref('')
 const password = ref('')
@@ -23,7 +24,18 @@ async function login() {
     })
 
     saveSession(data.token, data.user)
-    router.push('/lezioni')
+
+    // Se la route guard aveva mandato qui l'utente, lo riporto alla pagina
+    // che voleva aprire. Accetto solo indirizzi interni (che iniziano con
+    // una sola /), così un link con ?redirect=https://altro-sito non
+    // porta fuori dall'app.
+    const redirect = route.query.redirect
+
+    if (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')) {
+      router.push(redirect)
+    } else {
+      router.push('/lezioni')
+    }
   } catch (error) {
     errorMessage.value = error.message
   } finally {
