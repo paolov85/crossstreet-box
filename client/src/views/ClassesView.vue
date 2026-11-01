@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { apiRequest } from '../api'
 import { session } from '../auth'
+import { formatDate } from '../format'
 
 const categories = ['CrossFit', 'Hyrox', 'Open Box']
 
@@ -74,18 +75,6 @@ async function bookClass(lesson) {
   } finally {
     bookingClassId.value = null
   }
-}
-
-// Il server manda le date in UTC (es. "2026-11-01T06:00:00.000Z"):
-// toLocaleString le mostra nell'ora italiana, ora legale compresa
-function formatDate(isoDate) {
-  return new Date(isoDate).toLocaleString('it-IT', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 </script>
 
