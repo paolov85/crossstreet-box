@@ -220,9 +220,4 @@ async function bookClass(lesson) {
   font-weight: 700;
   color: #1e5e34;
 }
-
-.button.secondary {
-  background: var(--color-dark);
-  color: var(--color-light);
-}
 </style>

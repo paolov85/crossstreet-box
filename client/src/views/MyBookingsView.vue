@@ -135,9 +135,4 @@ async function cancelBooking(booking) {
 .date {
   font-weight: 600;
 }
-
-.button.danger {
-  background: #9b1c1c;
-  color: var(--color-light);
-}
 </style>

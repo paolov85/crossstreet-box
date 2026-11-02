@@ -48,6 +48,17 @@ a {
   border-radius: 4px;
 }
 
+/* Pulsante scuro (azioni secondarie) e rosso (disdire, eliminare) */
+.button.secondary {
+  background: var(--color-dark);
+  color: var(--color-light);
+}
+
+.button.danger {
+  background: #9b1c1c;
+  color: var(--color-light);
+}
+
 /* Moduli (registrazione, login, admin) */
 .form-page {
   max-width: 26rem;
