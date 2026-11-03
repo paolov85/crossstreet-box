@@ -1,0 +1,15 @@
+# Configurazione del deploy del front end su Netlify.
+# Il repository contiene sia server/ sia client/: Netlify pubblica solo il client.
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "dist"
+
+# Il router di Vue usa indirizzi puliti come /lezioni, che non esistono come
+# file sul server: senza questa regola, ricaricando la pagina su /lezioni
+# Netlify risponderebbe 404. Così ogni indirizzo riceve index.html e poi
+# è Vue Router a mostrare la pagina giusta.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
