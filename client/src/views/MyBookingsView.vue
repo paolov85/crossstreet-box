@@ -125,7 +125,7 @@ async function cancelBooking(booking) {
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #666666;
+  color: var(--color-muted);
 }
 
 .booking-card h2 {

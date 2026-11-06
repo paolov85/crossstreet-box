@@ -163,7 +163,7 @@ async function bookClass(lesson) {
 
 .filters button {
   background: var(--color-surface);
-  border: 1px solid #cccccc;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   padding: 0.35rem 1rem;
 }
@@ -200,7 +200,7 @@ async function bookClass(lesson) {
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #666666;
+  color: var(--color-muted);
 }
 
 .class-info h2 {
@@ -212,7 +212,7 @@ async function bookClass(lesson) {
 }
 
 .full {
-  color: #9b1c1c;
+  color: var(--color-danger);
   font-weight: 600;
 }
 

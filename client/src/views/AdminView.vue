@@ -273,7 +273,7 @@ async function deleteClass(lesson) {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border: 1px solid #dddddd;
+  border: 1px solid var(--color-border);
   border-left: 4px solid var(--color-accent);
   padding: 0.75rem 1rem;
 }
