@@ -99,6 +99,10 @@ h1 {
   max-width: 26rem;
 }
 
+.form-page > .message {
+  margin-bottom: 1rem;
+}
+
 form {
   display: flex;
   flex-direction: column;
@@ -154,6 +158,11 @@ button:disabled {
 .message.error {
   background: #fde8e8;
   color: var(--color-danger);
+}
+
+.message.info {
+  background: #fff8d6;
+  color: #5c4a00;
 }
 
 .message.success {

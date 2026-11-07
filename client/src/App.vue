@@ -2,7 +2,7 @@
 import { onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
-import { apiRequest } from './api'
+import { apiRequest, requestStatus } from './api'
 import { session, updateUser, clearSession } from './auth'
 
 const router = useRouter()
@@ -34,7 +34,8 @@ watch(
   () => session.user,
   (user) => {
     if (user === null && route.meta.requiresAuth) {
-      router.push({ name: 'login', query: { redirect: route.fullPath } })
+      // expired fa mostrare alla pagina di accesso il motivo del rimando
+      router.push({ name: 'login', query: { redirect: route.fullPath, expired: '1' } })
     }
   }
 )
@@ -43,8 +44,23 @@ watch(
 <template>
   <NavBar />
 
+  <!-- role="status" fa leggere l'avviso ai lettori di schermo -->
+  <p v-if="requestStatus.slowCount > 0" class="slow-banner" role="status">
+    Il server si sta avviando dopo un periodo di inattività: può volerci fino a un minuto.
+  </p>
+
   <main class="container">
     <!-- Qui il router mostra la pagina che corrisponde all'indirizzo -->
     <RouterView />
   </main>
 </template>
+
+<style scoped>
+.slow-banner {
+  background: var(--color-accent);
+  color: var(--color-dark);
+  font-weight: 600;
+  text-align: center;
+  padding: 0.6rem 1rem;
+}
+</style>

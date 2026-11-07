@@ -5,6 +5,7 @@ import { apiRequest } from '../api'
 const name = ref('')
 const email = ref('')
 const password = ref('')
+const passwordConfirm = ref('')
 
 const errorMessage = ref('')
 const registeredName = ref('')
@@ -19,6 +20,13 @@ async function register() {
   // un messaggio, senza aspettare la risposta. La sicurezza resta sul server.
   if (password.value.length < 8) {
     errorMessage.value = 'La password deve avere almeno 8 caratteri'
+    return
+  }
+
+  // La password non si vede mentre si scrive: chiederla due volte evita
+  // di registrarsi con un errore di battitura e non riuscire più ad accedere
+  if (password.value !== passwordConfirm.value) {
+    errorMessage.value = 'Le due password non coincidono'
     return
   }
 
@@ -63,6 +71,11 @@ async function register() {
         Password
         <input v-model="password" type="password" required autocomplete="new-password" />
         <small>Almeno 8 caratteri</small>
+      </label>
+
+      <label>
+        Ripeti la password
+        <input v-model="passwordConfirm" type="password" required autocomplete="new-password" />
       </label>
 
       <p v-if="errorMessage" class="message error">{{ errorMessage }}</p>

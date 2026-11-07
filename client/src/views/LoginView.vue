@@ -48,6 +48,10 @@ async function login() {
   <section class="page form-page">
     <h1>Accedi</h1>
 
+    <p v-if="route.query.expired" class="message info">
+      La sessione è scaduta: accedi di nuovo per continuare.
+    </p>
+
     <form @submit.prevent="login">
       <label>
         Email
