@@ -11,6 +11,7 @@ async function resetDatabase () {
   await db.query('DELETE FROM bookings')
   await db.query('DELETE FROM classes')
   await db.query('DELETE FROM users')
+  await db.query('DELETE FROM revoked_tokens')
 }
 
 // Registra un utente passando dall'API, fa il login e restituisce il token.

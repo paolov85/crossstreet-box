@@ -1,6 +1,7 @@
 const { test, beforeEach, after } = require('node:test')
 const assert = require('node:assert')
 const request = require('supertest')
+const jwt = require('jsonwebtoken')
 const { app, db, resetDatabase, createUser } = require('./helpers')
 
 beforeEach(async () => {
@@ -108,4 +109,56 @@ test('/api/auth/me risponde solo con un token valido', async () => {
   assert.strictEqual(withToken.body.email, 'anna@mail.it')
   assert.strictEqual(withoutToken.status, 401)
   assert.strictEqual(tamperedToken.status, 401)
+})
+
+test('dopo il logout il token non vale più', async () => {
+  const token = await createUser('anna@mail.it', false)
+
+  const logout = await request(app)
+    .post('/api/auth/logout')
+    .set('Authorization', 'Bearer ' + token)
+
+  const afterLogout = await request(app)
+    .get('/api/auth/me')
+    .set('Authorization', 'Bearer ' + token)
+
+  assert.strictEqual(logout.status, 204)
+  assert.strictEqual(afterLogout.status, 401)
+})
+
+test('il logout chiude solo la sessione di quel token', async () => {
+  // Due login dello stesso utente, come da due dispositivi diversi
+  const phoneToken = await createUser('anna@mail.it', false)
+  const laptopLogin = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'anna@mail.it', password: 'password123' })
+  const laptopToken = laptopLogin.body.token
+
+  await request(app)
+    .post('/api/auth/logout')
+    .set('Authorization', 'Bearer ' + phoneToken)
+
+  const laptop = await request(app)
+    .get('/api/auth/me')
+    .set('Authorization', 'Bearer ' + laptopToken)
+
+  assert.strictEqual(laptop.status, 200)
+})
+
+test('il logout senza token risponde 401', async () => {
+  const response = await request(app).post('/api/auth/logout')
+
+  assert.strictEqual(response.status, 401)
+})
+
+test('rifiuta un token firmato ma senza identificativo', async () => {
+  // Come i token creati prima dell'introduzione del logout: senza jti non
+  // si potrebbero chiudere, quindi non vanno accettati
+  const token = jwt.sign({ id: 1, role: 'user' }, process.env.JWT_SECRET, { expiresIn: '1h' })
+
+  const response = await request(app)
+    .get('/api/auth/me')
+    .set('Authorization', 'Bearer ' + token)
+
+  assert.strictEqual(response.status, 401)
 })

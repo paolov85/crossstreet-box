@@ -45,6 +45,17 @@ CREATE TABLE bookings (
   FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
 );
 
+-- Token chiusi con il logout prima della loro scadenza naturale.
+-- Un JWT resta valido fino alla scadenza anche se il browser lo dimentica:
+-- per chiudere davvero la sessione il server deve ricordarsi quali token
+-- non accettare più. Si salva solo l'identificativo del token (jti), non
+-- il token intero, e la sua scadenza: dopo quella data la riga non serve
+-- più, perché il token verrebbe rifiutato comunque.
+CREATE TABLE revoked_tokens (
+  jti CHAR(36) PRIMARY KEY,
+  expires_at DATETIME NOT NULL
+);
+
 -- Dati di esempio, per provare l'API senza doverli inserire a mano.
 -- Le date partono da oggi (CURDATE), cosi' le lezioni restano sempre
 -- nel futuro anche se il database viene creato tra qualche mese.

@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const express = require('express')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
@@ -99,10 +100,13 @@ router.post('/login', async (req, res) => {
   // Nel token metto solo id e ruolo: è firmato ma non cifrato, chiunque
   // può leggerne il contenuto, quindi niente dati riservati.
   // Dopo 24 ore scade e bisogna rifare il login.
+  // jwtid aggiunge un identificativo unico (jti): è quello che il logout
+  // salva per chiudere proprio questo token e non gli altri dello stesso
+  // utente, ad esempio quello aperto su un altro dispositivo.
   const token = jwt.sign(
     { id: user.id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '24h', jwtid: crypto.randomUUID() }
   )
 
   res.json({
@@ -125,6 +129,25 @@ router.get('/me', requireAuth, async (req, res) => {
   }
 
   res.json(users[0])
+})
+
+// Logout: chiude la sessione del token usato in questa richiesta.
+// Il browser cancella comunque il token, ma senza questa rotta chi ne
+// avesse una copia potrebbe continuare a usarlo fino alla scadenza.
+router.post('/logout', requireAuth, async (req, res) => {
+  // exp è in secondi dal 1970, Date vuole i millisecondi
+  const expiresAt = new Date(req.user.exp * 1000)
+
+  await db.execute(
+    'INSERT INTO revoked_tokens (jti, expires_at) VALUES (?, ?)',
+    [req.user.jti, expiresAt]
+  )
+
+  // Già che ci sono tolgo le righe dei token scaduti: verrebbero rifiutati
+  // comunque, tenerle farebbe solo crescere la tabella
+  await db.execute('DELETE FROM revoked_tokens WHERE expires_at < ?', [new Date()])
+
+  res.status(204).end()
 })
 
 module.exports = router
