@@ -88,6 +88,7 @@ l'intestazione `Authorization: Bearer <token>`, con il token ricevuto dal login.
 |---|---|---|---|
 | POST | `/auth/register` | tutti | registrazione |
 | POST | `/auth/login` | tutti | login, restituisce il token |
+| POST | `/auth/logout` | utente | chiude la sessione: il token non vale più |
 | GET | `/auth/me` | utente | dati dell'utente collegato |
 | GET | `/classes` | tutti | prossime lezioni con i posti liberi, filtro `?category=` |
 | POST | `/classes` | admin | crea una lezione |
@@ -108,9 +109,9 @@ cd server
 npm test
 ```
 
-Sono 22 test con `node:test` e supertest su registrazione, login, permessi,
-lezioni e prenotazioni. Girano su un database separato, `crossstreet_box_test`,
-che si crea una volta con:
+Sono 26 test con `node:test` e supertest su registrazione, login, logout,
+permessi, lezioni e prenotazioni. Girano su un database separato,
+`crossstreet_box_test`, che si crea una volta con:
 
 ```
 sed 's/crossstreet_box/crossstreet_box_test/' migrations.sql | mysql -u root -p
@@ -123,8 +124,13 @@ sed 's/crossstreet_box/crossstreet_box_test/' migrations.sql | mysql -u root -p
   scopre quali email sono registrate.
 - **JWT invece della sessione con cookie**: front end e back end sono su domini
   diversi e il token nell'intestazione evita i problemi dei cookie tra domini.
-  Il token contiene solo id e ruolo e scade dopo 24 ore; il logout lo cancella
-  dal browser.
+  Il token contiene solo id, ruolo e un identificativo unico, e scade dopo 24
+  ore.
+- **Logout vero anche sul server**: un JWT resta valido fino alla scadenza
+  anche se il browser lo dimentica. Il logout salva il suo identificativo nella
+  tabella `revoked_tokens` e da quel momento il server lo rifiuta. Chiude solo
+  la sessione di quel token: un login aperto su un altro dispositivo resta
+  valido.
 - **Permessi controllati sul server**: i controlli del router di Vue servono
   solo a guidare l'utente. Ogni rotta protetta verifica token e ruolo nel back
   end, e una prenotazione di un altro utente risponde 404 come se non esistesse.

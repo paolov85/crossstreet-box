@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { session, clearSession } from '../auth'
+import { apiRequest } from '../api'
 
 const router = useRouter()
 const route = useRoute()
@@ -23,7 +24,17 @@ watch(
 // alla pagina di accesso invece che alla home
 async function logout() {
   await router.push('/')
-  clearSession()
+
+  try {
+    // Il server segna il token come chiuso: da qui in poi non vale più,
+    // anche se qualcuno ne avesse una copia
+    await apiRequest('/auth/logout', { method: 'POST' })
+  } catch (error) {
+    // Se il server non risponde o il token era già scaduto, l'utente
+    // esce lo stesso: il token nel browser va cancellato comunque
+  } finally {
+    clearSession()
+  }
 }
 </script>
 
